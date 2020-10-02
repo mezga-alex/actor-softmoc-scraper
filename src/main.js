@@ -184,6 +184,7 @@ Apify.main(async () => {
                 if (checkLimit()) {
                     return;
                 }
+                log.info(`START URL list: ${request.url}`);
 
                 const itemLinks = $('.product-text a');
                 for (let index = 0; index < itemLinks.length; index++) {
