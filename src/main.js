@@ -224,6 +224,8 @@ Apify.main(async () => {
                     });
                 }
             } else if (request.userData.label === 'item') {
+                log.info('ITEM ITEM ITEM');
+
                 const pageResults = extractData(request, body, $);
                 let userResult;
 
@@ -240,6 +242,7 @@ Apify.main(async () => {
                     if (userResult) {
                         pageResult = Object.assign(pageResult, userResult);
                     }
+                    log.info(pageResult);
 
                     await Apify.pushData(pageResult);
                 }
