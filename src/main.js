@@ -4,10 +4,10 @@ const safeEval = require('safe-eval');
 const url = require('url');
 const querystring = require('querystring');
 
-const { extractData } = require('./extract');
-const { delay, isObject } = require('./utils');
+const {extractData} = require('./extract');
+const {delay, isObject} = require('./utils');
 
-const { log } = Apify.utils;
+const {log} = Apify.utils;
 log.setLevel(log.LEVELS.DEBUG);
 
 let detailsEnqueued = 0;
@@ -16,13 +16,13 @@ Apify.events.on('migrating', async () => {
     await Apify.setValue('detailsEnqueued', detailsEnqueued);
 });
 
-const WEBSITE = 'https://www.saksfifthavenue.com';
+const WEBSITE = 'https://www.adidas.com';
 
 Apify.main(async () => {
     const input = await Apify.getInput();
     log.info('Input:', input);
 
-    const { startUrls, maxItems, extendOutputFunction, proxyConfiguration } = input;
+    const {startUrls, maxItems, extendOutputFunction, proxyConfiguration} = input;
 
     if (!input || !Array.isArray(input.startUrls) || input.startUrls.length === 0) {
         throw new Error("Invalid input, it needs to contain at least one url in 'startUrls'.");
@@ -65,28 +65,31 @@ Apify.main(async () => {
             break;
         }
 
-        if (startUrl.includes('saksfifthavenue.com')) {
-            if (!startUrl.includes('www.saksfifthavenue.com')) {
-                startUrl = startUrl.replace('saksfifthavenue.com', 'www.saksfifthavenue.com');
+        if (startUrl.includes('adidas.com')) {
+            if (!startUrl.includes('www.adidas.com')) {
+                startUrl = startUrl.replace('adidas.com', 'www.adidas.com');
             }
 
-            if (startUrl.includes('/product/')) {
-                const { pathname } = url.parse(startUrl);
+            if (startUrl.includes('.html')) {
+                const {pathname} = url.parse(startUrl);
                 const parts = pathname.split('/');
-                const itemId = parts[3];
-                const { wasAlreadyPresent, wasAlreadyHandled } = await requestQueue.addRequest(
-                    { url: startUrl, uniqueKey: itemId, userData: { label: 'item' } },
-                    { forefront: true },
+                // Get product ID
+                const itemId = parts[parts.length - 1].replace('.html', '');
+
+                // Check if the link was processed
+                const {wasAlreadyPresent, wasAlreadyHandled} = await requestQueue.addRequest(
+                    {url: startUrl, uniqueKey: itemId, userData: {label: 'item'}},
+                    {forefront: true},
                 );
                 if (!wasAlreadyPresent && !wasAlreadyHandled) {
                     detailsEnqueued++;
                 }
-            } else if (startUrl.includes('/shop/')) {
-                await requestQueue.addRequest({ url: startUrl, userData: { label: 'shop' } });
-            } else if (startUrl.includes('SectionPage.jsp')) {
-                await requestQueue.addRequest({ url: startUrl, userData: { label: 'section' } });
+            } else if (startUrl.includes('/mens-') || startUrl.includes('/womens-')) {
+                await requestQueue.addRequest({url: startUrl, userData: {label: 'shop'}});
+            } else if (startUrl.includes('/v/')) {
+                await requestQueue.addRequest({url: startUrl, userData: {label: 'section'}});
             } else {
-                await requestQueue.addRequest({ url: startUrl, userData: { label: 'home' } });
+                await requestQueue.addRequest({url: startUrl, userData: {label: 'home'}});
             }
         }
     }
@@ -99,7 +102,7 @@ Apify.main(async () => {
         maxRequestRetries: 2,
         handlePageTimeoutSecs: 1800,
 
-        handlePageFunction: async ({ request, body, $ }) => {
+        handlePageFunction: async ({request, body, $}) => {
             log.info(`Processing ${request.url}...`);
 
             if (body.includes('Access Denied')) {
@@ -122,9 +125,9 @@ Apify.main(async () => {
                     const shopUrl = `${WEBSITE}${href}`;
 
                     if (href.includes('/shop/')) {
-                        await requestQueue.addRequest({ url: shopUrl, userData: { label: 'shop' } });
+                        await requestQueue.addRequest({url: shopUrl, userData: {label: 'shop'}});
                     } else if (href.includes('SectionPage.jsp')) {
-                        await requestQueue.addRequest({ url: shopUrl, userData: { label: 'section' } });
+                        await requestQueue.addRequest({url: shopUrl, userData: {label: 'section'}});
                     }
                     await delay(5000);
                 }
@@ -142,7 +145,7 @@ Apify.main(async () => {
                     const href = $(shopLinks[index]).attr('href');
                     if (href.includes('/shop/')) {
                         const shopUrl = `${WEBSITE}${href}`;
-                        await requestQueue.addRequest({ url: shopUrl, userData: { label: 'shop' } });
+                        await requestQueue.addRequest({url: shopUrl, userData: {label: 'shop'}});
                         await delay(5000);
                     }
                 }
@@ -164,8 +167,8 @@ Apify.main(async () => {
 
                     const href = $(itemLinks[index]).attr('href');
 
-                    await requestQueue.addRequest({ url: `${href}`, userData: { label: 'item' } },
-                        { forefront: true });
+                    await requestQueue.addRequest({url: `${href}`, userData: {label: 'item'}},
+                        {forefront: true});
                     detailsEnqueued++;
                 }
 
@@ -177,8 +180,10 @@ Apify.main(async () => {
                     const startNumber = index * perPage;
                     let startUrl = request.url;
                     startUrl += `${startUrl.includes('?') ? '&' : '?'}Nao=${startNumber}`;
-                    await requestQueue.addRequest({ url: startUrl,
-                        userData: { label: 'list', current: index, total: pageCount, perPage } });
+                    await requestQueue.addRequest({
+                        url: startUrl,
+                        userData: {label: 'list', current: index, total: pageCount, perPage}
+                    });
                 }
             } else if (request.userData.label === 'list') {
                 if (checkLimit()) {
@@ -194,14 +199,14 @@ Apify.main(async () => {
 
                     const href = $(itemLinks[index]).attr('href');
 
-                    await requestQueue.addRequest({ url: `${href}`, userData: { label: 'item' } },
-                        { forefront: true });
+                    await requestQueue.addRequest({url: `${href}`, userData: {label: 'item'}},
+                        {forefront: true});
                     detailsEnqueued++;
                 }
 
                 const index = request.userData.current + 1;
                 const pageCount = request.userData.total;
-                const { perPage } = request.userData;
+                const {perPage} = request.userData;
 
                 if (index < pageCount) {
                     const startNumber = index * perPage;
@@ -213,8 +218,10 @@ Apify.main(async () => {
                     query = querystring.stringify(params);
                     startUrl = `${startUrl}?${query}`;
 
-                    await requestQueue.addRequest({ url: startUrl,
-                        userData: { label: 'list', current: index, total: pageCount, perPage } });
+                    await requestQueue.addRequest({
+                        url: startUrl,
+                        userData: {label: 'list', current: index, total: pageCount, perPage}
+                    });
                 }
             } else if (request.userData.label === 'item') {
                 const pageResults = extractData(request, body, $);
@@ -240,7 +247,7 @@ Apify.main(async () => {
         },
 
         // This function is called if the page processing failed more than maxRequestRetries+1 times.
-        handleFailedRequestFunction: async ({ request }) => {
+        handleFailedRequestFunction: async ({request}) => {
             log.info(`Request ${request.url} failed twice.`);
         },
 
