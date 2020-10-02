@@ -15,7 +15,8 @@ function toMap(list) {
 
 function extractData(request, html, $) {
     // ADIDAS
-    log.info('html:', html);
+    // log.info('html:', html);
+
     const title_a = $('#product-title').text();
     const colors_a = $('color___3xvLb').text();
     const price_a = $('price___2HdoY').text();

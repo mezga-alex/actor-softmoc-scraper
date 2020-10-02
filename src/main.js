@@ -225,6 +225,9 @@ Apify.main(async () => {
                 }
             } else if (request.userData.label === 'item') {
                 log.info('ITEM ITEM ITEM');
+                const title = $('#product-title').text();
+                log.info(`Title: ${title}`);
+
 
                 const pageResults = extractData(request, body, $);
                 let userResult;
