@@ -1,6 +1,7 @@
 /* eslint-disable camelcase */
 const Apify = require('apify');
 const url = require('url');
+const {log} = Apify.utils;
 
 function toMap(list) {
     const map = new Map();
@@ -14,6 +15,7 @@ function toMap(list) {
 
 function extractData(request, html, $) {
     // ADIDAS
+    log.info('html:', html);
     const title_a = $('#product-title').text();
     const colors_a = $('color___3xvLb').text();
     const price_a = $('price___2HdoY').text();
@@ -32,7 +34,7 @@ function extractData(request, html, $) {
                     '#debug': Apify.utils.createRequestDebugInfo(request),
                 };
     results.push(result);
-    
+
 
     // // <script type="application/json"></script>
     // const scriptData1 = $('.framework-component script[type="application/json"]').text();
