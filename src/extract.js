@@ -1,7 +1,6 @@
 /* eslint-disable camelcase */
 const Apify = require('apify');
 const url = require('url');
-const {log} = Apify.utils;
 
 function toMap(list) {
     const map = new Map();
@@ -14,182 +13,36 @@ function toMap(list) {
 }
 
 function extractData(request, html, $) {
-    // ADIDAS
-    // log.info('html:', html);
+    let title = $('.name___1EbZs').text();
+    title = title.slice(0,title.length/2)
 
-    const title_a = $('#product-title').text();
-    const colors_a = $('color___3xvLb').text();
-    const price_a = $('price___2HdoY').text();
-    const images = $('pagination___1IZBh').text();
+    let colors = $('.color___3xvLb').text();
+    colors = colors.slice(0,colors.length/2)
+
+    let temp_price = $('.gl-price__value').text();
+    // Bug with adidas.com (2x strings)
+    temp_price = temp_price.slice(0,temp_price.length/2);
+    let price = temp_price.replace(/[.,\s\D]/g, '');
+    let currency = temp_price.replace(/[.,\s\d+]/g, '');
+
+    const images = [];
+    $('.pagination___1IZBh img').each(function () {
+        images.push({ src: $(this).attr('src').toString() });
+    });
+
     const now = new Date();
     const results = [];
     const result = {
-                    url: request.url,
-                    scrapedAt: now.toISOString(),
-                    title_a,
-                    color: '',
-                    images,
-                    composition: null,
-                    sizes: [],
-                    availableSizes: [],
-                    '#debug': Apify.utils.createRequestDebugInfo(request),
-                };
+        url: request.url,
+        scrapedAt: now.toISOString(),
+        title,
+        colors,
+        price,
+        currency,
+        images:images,
+        '#debug': Apify.utils.createRequestDebugInfo(request),
+    };
     results.push(result);
-
-
-    // // <script type="application/json"></script>
-    // const scriptData1 = $('.framework-component script[type="application/json"]').text();
-    // const scriptData2 = $('.productDetail > script').text().replace('var pageData =', '').trim()
-    //     .slice(0, -1);
-    //
-    // const json = JSON.parse(scriptData1);
-    // const pageJson = JSON.parse(scriptData2);
-    //
-    // const { protocol, pathname } = url.parse(request.url);
-    // const parts = pathname.split('/');
-    // const itemId = parts[3];
-    // const title = $('.product-overview__heading').text();
-    // const shortDescription = $('.product-overview__short-description').text();
-    //
-    // const { designer } = pageJson.page;
-    // const { brand } = pageJson.products[0];
-    //
-    // const now = new Date();
-    // const { categories, colors, sizes, skus, media, description } = json.ProductDetails.main_products[0];
-    // const descriptionText = description.replace(/<[^>]*>?/gm, '.').replace(/[.]+/g, '. ');
-    // const source = 'www.saksfifthavenue.com';
-    //
-    // const results = [];
-    // const imageUrlPrefix = protocol + media.images_server_url + media.images_path;
-    // const mediaImages = media.images;
-    // const sizeList = sizes ? sizes.sizes : [];
-    // const colorList = colors.colors;
-    // const skuList = skus.skus;
-    // const colorMap = toMap(colorList);
-    // const sizeMap = toMap(sizeList);
-    // const colorToAvailableSizes = new Map();
-    // const colorToSizes = new Map();
-    // const colorToPrice = new Map();
-
-    // for (const sku of skuList) {
-    //     const { color_id, size_id, price, status_alias } = sku;
-    //     if (color_id !== -1) {
-    //         let relatedSizes = colorToSizes.get(color_id);
-    //         if (!relatedSizes) {
-    //             relatedSizes = [];
-    //             colorToSizes.set(color_id, relatedSizes);
-    //         }
-    //
-    //         let relatedAvailableSizes = colorToAvailableSizes.get(color_id);
-    //         if (!relatedAvailableSizes) {
-    //             relatedAvailableSizes = [];
-    //             colorToAvailableSizes.set(color_id, relatedAvailableSizes);
-    //         }
-    //
-    //         if (size_id !== -1) {
-    //             const { is_soldout } = sizeMap.get(size_id);
-    //             if (is_soldout === false) {
-    //                 relatedAvailableSizes.push(size_id);
-    //                 colorToAvailableSizes.set(color_id, relatedAvailableSizes);
-    //             }
-    //
-    //             relatedSizes.push(size_id);
-    //             colorToSizes.set(color_id, relatedSizes);
-    //         }
-    //
-    //         colorToPrice.set(color_id, price);
-    //     } else if (status_alias !== 'soldout') { // 'preorder', 'soldout', 'available', 'waitlist'
-    //         // eslint-disable-next-line camelcase
-    //         const { list_price, sale_price } = price;
-    //         const listPrice = parseFloat(list_price.default_currency_value);
-    //         const salePrice = parseFloat(sale_price.default_currency_value);
-    //         const currency = list_price.local_currency_code;
-    //         const images = [];
-    //         for (const image of mediaImages) {
-    //             images.push({ src: imageUrlPrefix + image });
-    //         }
-    //
-    //         const result = {
-    //             url: request.url,
-    //             categories,
-    //             scrapedAt: now.toISOString(),
-    //             title,
-    //             shortDescription,
-    //             description: descriptionText.trim(),
-    //             designer,
-    //             itemId,
-    //             color: '',
-    //             price: listPrice,
-    //             salePrice,
-    //             currency,
-    //             source,
-    //             brand,
-    //             images,
-    //             composition: null,
-    //             sizes: [],
-    //             availableSizes: [],
-    //             '#debug': Apify.utils.createRequestDebugInfo(request),
-    //         };
-    //
-    //         results.push(result);
-    //     }
-    // }
-
-    // colorToPrice.forEach((value, key, map) => {
-    //     const relatedSizes = colorToSizes.get(key);
-    //     const relatedAvailableSizes = colorToAvailableSizes.get(key);
-    //     const price = map.get(key);
-    //     const color = colorMap.get(key);
-    //     const { label, colorize_image_url, is_soldout } = color;
-    //
-    //     if (is_soldout === false) {
-    //         // eslint-disable-next-line camelcase
-    //         const { list_price, sale_price } = price;
-    //         const listPrice = parseFloat(list_price.default_currency_value);
-    //         const salePrice = parseFloat(sale_price.default_currency_value);
-    //         const currency = list_price.local_currency_code;
-    //         const sizeValues = relatedSizes.map((sizeId) => { return sizeMap.get(sizeId).value; });
-    //         const availableSizeValues = relatedAvailableSizes.map((sizeId) => { return sizeMap.get(sizeId).value; });
-    //         const colorImageUrl = { src: imageUrlPrefix + colorize_image_url };
-    //         const images = [];
-    //         let found = false;
-    //         for (const image of mediaImages) {
-    //             if (image === colorize_image_url) {
-    //                 found = true;
-    //             }
-    //             images.push({ src: imageUrlPrefix + image });
-    //         }
-    //
-    //         if (found === false) {
-    //             images.push(colorImageUrl);
-    //         }
-    //
-    //         const result = {
-    //             url: request.url.split('?')[0],
-    //             categories,
-    //             scrapedAt: now.toISOString(),
-    //             title,
-    //             shortDescription,
-    //             description: descriptionText,
-    //             designer,
-    //             itemId,
-    //             color: label,
-    //             price: listPrice,
-    //             salePrice,
-    //             currency,
-    //             source,
-    //             brand,
-    //             images,
-    //             composition: null,
-    //             sizes: sizeValues,
-    //             availableSizes: availableSizeValues,
-    //             '#debug': Apify.utils.createRequestDebugInfo(request),
-    //         };
-    //
-    //         results.push(result);
-    //     }
-    // });
-
     return results;
 }
 

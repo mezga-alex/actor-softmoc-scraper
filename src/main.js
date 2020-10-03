@@ -65,9 +65,9 @@ Apify.main(async () => {
             break;
         }
 
-        if (startUrl.includes('adidas.com')) {
-            if (!startUrl.includes('www.adidas.com')) {
-                startUrl = startUrl.replace('adidas.com', 'www.adidas.com');
+        if (startUrl.includes('adidas.')) {
+            if (!startUrl.includes('www.adidas.')) {
+                startUrl = startUrl.replace('adidas.', 'www.adidas.');
             }
 
             if (startUrl.includes('.html')) {
@@ -224,11 +224,6 @@ Apify.main(async () => {
                     });
                 }
             } else if (request.userData.label === 'item') {
-                log.info('ITEM ITEM ITEM');
-                const title = $('#product-title').text();
-                log.info(`Title: ${title}`);
-
-
                 const pageResults = extractData(request, body, $);
                 let userResult;
 
@@ -245,7 +240,6 @@ Apify.main(async () => {
                     if (userResult) {
                         pageResult = Object.assign(pageResult, userResult);
                     }
-                    log.info(pageResult);
 
                     await Apify.pushData(pageResult);
                 }
